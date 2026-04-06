@@ -1,4 +1,4 @@
---- START OF FILE rust-app-main/rust-engine/Cargo.toml ---
+
 [package]
 name = "rust-engine"
 version = "3.6.0" # Bumped version for 2026 stack update
@@ -61,4 +61,4 @@ opt-level = "s"
 lto = true
 strip = true
 codegen-units = 1
---- END OF FILE rust-app-main/rust-engine/Cargo.toml ---
+
