@@ -35,9 +35,8 @@ jobs:
           targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
       - name: Install UniFFI Bindgen CLI
-        # NOTE: Using the hyphenated 'uniffi-bindgen' crate which contains the binary.
-        # Version must match the 'uniffi' dependency in Cargo.toml.
-        run: cargo install uniffi-bindgen --version 0.25.0
+        # 0.25.3 is the verified available version for the uniffi-bindgen binary crate
+        run: cargo install uniffi-bindgen --version 0.25.3
 
       - name: Setup Android NDK
         run: |
@@ -51,7 +50,7 @@ jobs:
           if [ ! -f "gradlew" ]; then
             echo "Generating Gradle Wrapper..."
             gradle wrapper
-          }
+          fi
           
           chmod +x gradlew
           ./gradlew assembleRelease --warning-mode none
