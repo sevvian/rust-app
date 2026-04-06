@@ -50,7 +50,7 @@ impl<'a> ScraperEngine<'a> {
         }
 
         let response = request.send().await?;
-        
+
         if !response.status().is_success() {
             return Err(anyhow!("Unexpected status code: {}", response.status()));
         }
@@ -95,7 +95,7 @@ impl<'a> ScraperEngine<'a> {
 
         // 3. Regex Fallback (Matches Go's implementation for resilience)
         if results.is_empty() {
-            let re = Regex::new(r#"(?i)<a\s+[^>]*href="([^"]*/book[^"]*)"[^>]*>(\d+)</a>"#).unwrap();
+            let re = Regex::new(r#"(?i)<a[^>]*href="([^"]*book[^"]*)"[^>]*>(\d+)"#).unwrap();
             for cap in re.captures_iter(html) {
                 results.push(Availability {
                     date: cap[2].to_string(),
