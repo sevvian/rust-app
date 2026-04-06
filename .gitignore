@@ -1,13 +1,32 @@
 ```
+# Build artifacts
+build/
+
+# Gradle
 .gradle/
-local.properties
+!gradle.properties
+!gradlew
+!gradlew.bat
+
+# Android
+*.apk
+*.aar
 *.iml
-*.ipr
-*.iws
-.idea/
-*.swp
-*.swo
-*~
+local.properties
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Dependencies
+node_modules/
+vendor/
+
+# Logs
+*.log
+
+# OS generated files
 .DS_Store
 Thumbs.db
 ```
