@@ -1,5 +1,12 @@
-namespace rust_engine {
-    // Error types that can be caught as Exceptions in Kotlin
+namespace agent {
+    // Status record exported to Kotlin
+    record EngineStatus {
+        boolean is_running;
+        string last_log;
+        string current_run_id;
+    };
+
+    // Error enum
     [Error]
     enum EngineError {
         "ConfigError",
@@ -7,31 +14,23 @@ namespace rust_engine {
         "BookingFailed",
         "InternalError"
     };
+};
 
-    // Dictionary representing the real-time state for the Android UI
-    dictionary EngineStatus {
-        boolean is_running;
-        string last_log;
-        string current_run_id;
-    };
+// Interface for the booking agent
+// Note: For uniffi 0.30.0, we use [TraitInterface] attribute in UDL
+[TraitInterface]
+interface BookingAgent {
+    // Constructor
+    constructor();
 
-    // The core interface that Android will instantiate
-    interface BookingAgent {
-        // Creates a new instance of the agent
-        constructor();
+    // Get current status
+    EngineStatus get_status();
 
-        // Starts a high-precision strike. 
-        // config_json: Entire application state serialized to JSON
-        // run_id: Unique UUID for this specific execution
-        [ThreadSafe]
-        async fn start_strike(config_json: string, run_id: string) -> Result<boolean, EngineError>;
+    // Stop the current operation
+    void stop();
 
-        // Force stops any active operations and shuts down the tokio runtime
-        [ThreadSafe]
-        fn stop();
-
-        // Polls the current status of the engine for UI updates
-        [ThreadSafe]
-        async fn get_status() -> EngineStatus;
-    };
+    // Start a strike operation
+    // Returns boolean indicating success/failure
+    [Throws=EngineError]
+    boolean start_strike(string config_json, string run_id);
 };
