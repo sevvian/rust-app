@@ -1,15 +1,12 @@
 name: Production Build & Release
 
 on:
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
       build_name:
         description: 'Custom name for the build'
         required: false
         default: 'manual-build'
-  
-  # Automatically runs when you push a version tag (e.g., v3.3.0)
   push:
     tags:
       - 'v*'
@@ -17,7 +14,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Required permissions for creating releases and uploading assets
     permissions:
       contents: write
     
@@ -38,27 +34,43 @@ jobs:
           toolchain: stable
           targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
-      - name: Install Android NDK
-        run: echo "y" | sudo ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.2.9519653"
-
-      - name: Set NDK Path
-        run: echo "ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/25.2.9519653" >> $GITHUB_ENV
+      - name: Setup Android NDK
+        id: setup-ndk
+        run: |
+          # Use the latest NDK available on the runner to avoid version mismatch
+          ANDROID_NDK_PATH=$(ls -d ${ANDROID_SDK_ROOT}/ndk/* | tail -1)
+          echo "ANDROID_NDK_HOME=${ANDROID_NDK_PATH}" >> $GITHUB_ENV
+          echo "NDK path set to: ${ANDROID_NDK_PATH}"
 
       - name: Build Rust Engine & Android APK
-        working-directory: ./android-app
         run: |
-          chmod +x gradlew
-          ./gradlew assembleRelease
+          # Detect if project is in a subfolder or root
+          if [ -d "android-app" ]; then
+            cd android-app
+          fi
+          
+          # Use gradlew if it exists, otherwise use system gradle
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            ./gradlew assembleRelease
+          else
+            echo "Gradlew not found, using system gradle..."
+            gradle assembleRelease
+          fi
 
       - name: Prepare Artifact
         run: |
-          # Try to find the generated APK regardless of build variant name
-          find android-app/app/build/outputs/apk/ -name "*.apk" -exec cp {} appt-agent-v3.3.apk \;
+          # Find the generated APK in any sub-build-folder
+          APK_PATH=$(find . -name "*release*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "Error: APK not found"
+            exit 1
+          fi
+          cp "$APK_PATH" appt-agent-v3.3.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          # Use the tag name if triggered by tag, otherwise use the manual input/timestamp
           tag_name: ${{ github.ref_name == 'main' && format('manual-{0}', github.run_number) || github.ref_name }}
           files: appt-agent-v3.3.apk
           name: Appointment Agent ${{ github.event.inputs.build_name || github.ref_name }}
