@@ -16,7 +16,7 @@ android {
         minSdk = 26 
         targetSdk = 34
         versionCode = 1
-        versionName = "3.3.0"
+        versionName = "3.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -62,11 +62,10 @@ android {
  * FIXED: Rust Extension Configuration
  * Uses explicit setters to avoid DSL keyword collisions in Gradle 9.x
  */
-configure<RustExtension> {
-    setModule("../../rust-engine")
-    setLibname("rust_engine")
-    setTargets(listOf("arm", "arm64", "x86", "x86_64"))
-}
+val rustExt = extensions.getByType(RustExtension::class.java)
+rustExt.setModule("../../rust-engine")
+rustExt.setLibname("rust_engine")
+rustExt.setTargets(listOf("arm", "arm64", "x86", "x86_64"))
 
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2023.10.01")
