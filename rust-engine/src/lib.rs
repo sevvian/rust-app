@@ -3,7 +3,7 @@ uniffi::include_scaffolding!("agent");
 use crate::config::{AppConfig, ScheduledRun};
 use crate::http_client::MimicClient;
 use crate::scraper_engine::ScraperEngine;
-use crate::book_engine::BookerEngine; // Matches file name from previous step
+use crate::book_engine::BookerEngine;
 use crate::scraper_engine::Availability;
 
 use std::sync::Arc;
@@ -68,13 +68,19 @@ impl BookingAgent {
                 sleep(Duration::from_millis((diff_ms - 5) as u64)).await;
             } else {
                 // Spin-wait for the last few milliseconds for microsecond accuracy
-                // This prevents thread-context-switch latency at the strike moment
                 std::hint::spin_loop();
             }
             now = Utc::now();
         }
         Ok(())
     }
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct EngineStatus {
+    pub is_running: bool,
+    pub last_log: String,
+    pub current_run_id: String,
 }
 
 #[uniffi::export]
@@ -117,8 +123,6 @@ impl BookingAgent {
         let run = cfg.scheduled_runs.iter().find(|r| r.id == run_id)
             .ok_or(EngineError::ConfigError)?.clone();
 
-        let agent_ref = Arc::new(self);
-        
         // 3. Main Execution Block
         let result = tokio::select! {
             res = self.execute_strike_logic(cfg, run) => res,
@@ -151,7 +155,7 @@ impl BookingAgent {
 
         let site = cfg.sites.get(&run.sitekey).ok_or_else(|| anyhow!("Site not found"))?;
         let museum = site.museums.get(&run.museumslug).ok_or_else(|| anyhow!("Museum not found"))?;
-        
+
         // Initialize the Mimicry Client (BoringSSL/JA3)
         let client = MimicClient::new(30000)?;
         self.log(format!("Identity Locked: {}", client.profile_name)).await;
@@ -175,7 +179,7 @@ impl BookingAgent {
 
         let scraper = ScraperEngine::new(&client, site);
         let deadline = Instant::now() + Duration::from_millis(cfg.check_window_ms);
-        
+
         // Strike Loop
         while Instant::now() < deadline {
             for month_idx in 0..cfg.months_to_check {
@@ -183,15 +187,15 @@ impl BookingAgent {
                 let date_str = target_month.format("%Y-%m-%d").to_string();
 
                 let avails = scraper.fetch_availability(&date_str, &museum.museumid).await?;
-                
+
                 if !avails.is_empty() {
                     if run.mode == "booking" {
                         if let Some(target) = self.find_preferred_match(&avails, &cfg.preferred_days) {
                             self.log(format!("Match found: {}. Attempting booking...", target.date)).await;
-                            
+
                             let cred = cfg.credentials.get(&run.credentialid)
                                 .ok_or_else(|| anyhow!("Credential not found"))?;
-                                
+
                             let booker = book_engine::BookerEngine::new(&client, site, museum, cred);
                             match booker.book(&target).await {
                                 Ok(_) => {
