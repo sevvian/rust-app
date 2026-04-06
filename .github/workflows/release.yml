@@ -1,14 +1,14 @@
 name: Android CI (Rust + Kotlin)
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+#  push:
+ #   branches: [ main ]
+#  pull_request:
+#    branches: [ main ]
   # Trigger on version tags (e.g., v3.5.2)
-  push:
-    tags:
-      - 'v*'
+#  push:
+#    tags:
+#      - 'v*'
 
 jobs:
   build:
