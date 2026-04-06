@@ -1,5 +1,3 @@
-import org.mozilla.rustandroidgradle.rust.RustExtension
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -74,12 +72,18 @@ composeCompiler {
  * FIXED: Rust Extension Configuration
  * Uses explicit setters to avoid DSL keyword collisions in Gradle 9.x
  */
-val rustExt = extensions.getByType(RustExtension::class.java)
-rustExt.setModule("../../rust-engine")
-rustExt.setLibname("rust_engine")
-rustExt.setTargets(listOf("arm", "arm64", "x86", "x86_64"))
-// ADDED: Use release profile for better performance
-rustExt.setProfile("release")
+tasks.withType<org.mozilla.rustandroidgradle.rust.CargoBuildTask>().configureEach {
+    // Configure Rust build settings here if needed
+}
+
+// Configure the Rust extension using the configure block
+configure<org.mozilla.rustandroidgradle.rust.RustExtension> {
+    setModule("../../rust-engine")
+    setLibname("rust_engine")
+    setTargets(listOf("arm", "arm64", "x86", "x86_64"))
+    // ADDED: Use release profile for better performance
+    setProfile("release")
+}
 
 dependencies {
     // UPDATED: Compose BOM to 2025.02.00 (stable version compatible with Kotlin 2.1.0)
