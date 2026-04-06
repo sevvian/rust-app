@@ -43,14 +43,14 @@ jobs:
         run: |
           if [ -d "android-app" ]; then cd android-app; fi
           
-          # Initialize Gradle Wrapper if missing
           if [ ! -f "gradlew" ]; then
             echo "Generating Gradle Wrapper..."
             gradle wrapper
           fi
           
           chmod +x gradlew
-          ./gradlew assembleRelease
+          # Using --warning-mode none to prevent noise from 3rd party plugins
+          ./gradlew assembleRelease --warning-mode none
 
       - name: Prepare Artifact
         run: |
