@@ -4,14 +4,7 @@ plugins {
     id("org.jetbrains.kotlin.android") version "1.9.22" apply false
 }
 
-// Ensure repositories are defined for all subprojects
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-tasks.register("clean", Delete::class) {
-    delete(rootProject.buildDir)
+// Clean task using modern API to avoid deprecation warnings
+tasks.register<Delete>("clean") {
+    delete(layout.buildDirectory)
 }
