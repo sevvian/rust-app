@@ -1,7 +1,7 @@
 
 [package]
 name = "rust-engine"
-version = "3.6.0" 
+version = "3.6.1" 
 edition = "2021"
 description = "High-performance native booking engine for Android"
 
