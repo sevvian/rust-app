@@ -80,12 +80,12 @@ pub struct AppConfig {
     pub mode: String,
     pub preferred_days: Vec<String>,
     pub strike_time: String,
-    
+
     // Using milliseconds for easier JNI/JSON interop for durations
     pub check_window_ms: u64,
     pub check_interval_ms: u64,
     pub pre_warm_offset_ms: u64,
-    
+
     pub ntfy_topic: String,
     pub max_workers: usize,
     pub request_jitter_ms: u64,
