@@ -1,3 +1,5 @@
+import org.mozilla.rustandroidgradle.rust.RustExtension
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -57,14 +59,15 @@ android {
 }
 
 /**
- * FIXED: High-Precision Rust Configuration for Gradle 9.4.1
- * We use getByType to avoid 'Unresolved reference' errors with configure<T>.
- * We use explicit Java setters to avoid the 'module' vs 'DependencyHandler.module' collision.
+ * FIXED: Explicitly configure the Rust extension using the correctly resolved class.
+ * Using 'setModule' and 'setLibname' avoids the collision with the 'module' function 
+ * provided by the Gradle DependencyHandler.
  */
-val rustExtension = extensions.getByType(org.mozilla.rustandroidgradle.rust.RustExtension::class.java)
-rustExtension.setModule("../../rust-engine")
-rustExtension.setLibname("rust_engine")
-rustExtension.setTargets(listOf("arm", "arm64", "x86", "x86_64"))
+configure<RustExtension> {
+    setModule("../../rust-engine")
+    setLibname("rust_engine")
+    setTargets(listOf("arm", "arm64", "x86", "x86_64"))
+}
 
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2023.10.01")
