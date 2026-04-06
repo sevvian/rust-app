@@ -39,6 +39,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         startStatusPolling()
     }
 
+    // ... inside MainViewModel ...
+private val jsonParser = Json { ignoreUnknownKeys = true }
+
+// The full parsed config object
+val appConfig = configJson.map { 
+    try { jsonParser.decodeFromString<AppConfig>(it) } 
+    catch (e: Exception) { AppConfig() } 
+}.stateIn(viewModelScope, SharingStarted.Eagerly, AppConfig())
+
+// The current site being viewed in the UI (distinct from active_site in engine)
+private val _uiSelectedSite = MutableStateFlow("spl")
+val uiSelectedSite = _uiSelectedSite.asStateFlow()
+
+// REACTIVE FILTER: Credentials belonging only to the selected site
+val filteredCredentials = combine(appConfig, uiSelectedSite) { config, site ->
+    config.credentials.values.filter { it.site == site }
+}.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+// REACTIVE FILTER: Museums belonging only to the selected site
+val filteredMuseums = combine(appConfig, uiSelectedSite) { config, site ->
+    config.sites[site]?.museums?.values?.toList() ?: emptyList()
+}.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+fun setUiSelectedSite(site: String) {
+    _uiSelectedSite.value = site
+}
+
     /**
      * Periodically polls the Rust Engine for status and logs.
      * This replaces the WebSocket-based log viewer from the Go version.
