@@ -56,13 +56,25 @@ android {
     }
 }
 
-// FIX: Explicitly configure the Rust extension using the fully qualified class name
-// to avoid DSL ambiguity in Gradle 9.x. 
-// `module` is escaped with backticks to prevent collision with DependencyHandler.module
-extensions.configure<org.mozilla.rustandroidgradle.rust.RustContext> {
-    this.`module` = "../../rust-engine"
-    this.libname = "rust_engine"
-    this.targets = listOf("arm", "arm64", "x86", "x86_64")
+/**
+ * FIX: High-Fidelity Rust Configuration for Gradle 9.x
+ * We use dynamic lookup by name to bypass the 'module' keyword collision
+ * and the package resolution issues seen in previous builds.
+ */
+val rustExtension = extensions.findByName("rust")
+if (rustExtension != null) {
+    // We use the dynamic 'with' or 'apply' on the object to ensure the 
+    // properties are set on the correct receiver.
+    with(rustExtension) {
+        // Use reflective access via 'javaClass' to ensure we are setting 
+        // the properties on the RustExtension object even if the 
+        // Kotlin compiler can't see the type clearly.
+        javaClass.getMethod("setModule", String::class.java).invoke(this, "../../rust-engine")
+        javaClass.getMethod("setLibname", String::class.java).invoke(this, "rust_engine")
+        javaClass.getMethod("setTargets", List::class.java).invoke(this, listOf("arm", "arm64", "x86", "x86_64"))
+    }
+} else {
+    throw GradleException("Rust-Android plugin was not initialized correctly.")
 }
 
 dependencies {
@@ -83,7 +95,7 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }
 
-// Ensure Rust NDK build triggers before Kotlin compilation
+// Hook the Rust build into the Android compilation lifecycle
 tasks.whenTaskAdded {
     if (name == "javaPreCompileDebug" || name == "javaPreCompileRelease") {
         dependsOn("cargoBuild")
