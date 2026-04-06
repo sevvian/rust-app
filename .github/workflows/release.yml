@@ -9,7 +9,7 @@ on:
         default: 'manual-build'
   push:
     tags:
-      - 'v*.'
+      - 'v*'
 
 jobs:
   build:
@@ -40,8 +40,6 @@ jobs:
           echo "ANDROID_NDK_HOME=${ANDROID_NDK_PATH}" >> $GITHUB_ENV
 
       - name: Generate Kotlin Bindings (Option 2 Verified)
-        # We run the bindgen tool directly from the source code.
-        # This generates the .kt file that the Android app needs.
         run: |
           cd rust-engine
           cargo run --features uniffi/cli --bin uniffi-bindgen generate src/agent.udl --language kotlin --out-dir ../android-app/app/src/main/java/
@@ -50,7 +48,7 @@ jobs:
         run: |
           if [ -d "android-app" ]; then cd android-app; fi
           
-          if [ ! ( -f "gradlew" ) ]; then
+          if [ ! -f "gradlew" ]; then
             echo "Generating Gradle Wrapper..."
             gradle wrapper
           fi
@@ -65,18 +63,18 @@ jobs:
             echo "Error: APK not found"
             exit 1
           fi
-          cp "$APK_PATH" appt-agent-v3.5.apk
+          cp "$APK_PATH" appt-agent-v3.5.1.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name == 'main' && format('manual-{0}', github.run_number) || github.ref_name }}
-          files: appt-agent-v3.5.apk
+          files: appt-agent-v3.5.1.apk
           name: Appointment Agent ${{ github.event.inputs.build_name || github.ref_name }}
           body: |
             ## High Fidelity Appointment Agent Build
-            - Rust Core: BoringSSL / rquest Mimicry
-            - Unified UniFFI 0.28.1 Embedded Stack (Verified Option 2)
+            - Rust Core: BoringSSL / rquest 0.31.0 (Fixed yanked dependency)
+            - Unified UniFFI 0.28.1 Embedded Stack
             - Android 8-16 Compatibility
             - Encrypted Credential Storage
         env:
