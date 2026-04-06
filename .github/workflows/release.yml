@@ -35,8 +35,8 @@ jobs:
           targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
       - name: Install UniFFI Bindgen CLI
-        # 0.25.3 is the verified available version for the uniffi-bindgen binary crate
-        run: cargo install uniffi-bindgen --version 0.25.3
+        # NOTE: 0.25.2 is the verified latest version for the hyphenated binary crate on crates.io
+        run: cargo install uniffi-bindgen --version 0.25.2
 
       - name: Setup Android NDK
         run: |
