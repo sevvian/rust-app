@@ -34,6 +34,9 @@ jobs:
           toolchain: stable
           targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
+      - name: Install UniFFI Bindgen
+        run: cargo install uniffi_bindgen
+
       - name: Setup Android NDK
         run: |
           ANDROID_NDK_PATH=$(ls -d ${ANDROID_SDK_ROOT}/ndk/* | tail -1)
@@ -49,7 +52,6 @@ jobs:
           fi
           
           chmod +x gradlew
-          # Using --warning-mode none to prevent noise from 3rd party plugins
           ./gradlew assembleRelease --warning-mode none
 
       - name: Prepare Artifact
