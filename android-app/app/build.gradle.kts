@@ -1,4 +1,4 @@
-//--- START OF FILE rust-app-main/android-app/app/build.gradle.kts ---
+
 import org.mozilla.rustandroidgradle.rust.RustExtension
 
 plugins {
@@ -28,7 +28,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true // Enabled for 2026 production
+            isMinifyEnabled = true 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -49,8 +49,6 @@ android {
         compose = true
     }
 
-    // composeOptions removed: Compiler version now matches Kotlin version automatically
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -68,7 +66,6 @@ rustExt.setLibname("rust_engine")
 rustExt.setTargets(listOf("arm", "arm64", "x86", "x86_64"))
 
 dependencies {
-    // 2026 BOM Release
     val composeBom = platform("androidx.compose:compose-bom:2025.02.00")
     implementation(composeBom)
     
@@ -86,10 +83,8 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0")
 }
 
-// Integration: Ensure Rust builds before Java/Kotlin
 tasks.whenTaskAdded {
     if (name == "javaPreCompileDebug" || name == "javaPreCompileRelease") {
         dependsOn("cargoBuild")
     }
 }
-//--- END OF FILE rust-app-main/android-app/app/build.gradle.kts ---
