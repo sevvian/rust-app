@@ -1,81 +1,49 @@
-name: Production Build & Release
+
+name: Android CI (Rust + Kotlin)
 
 on:
-  workflow_dispatch:
-    inputs:
-      build_name:
-        description: 'Custom name for the build'
-        required: false
-        default: 'manual-build'
   push:
-    tags:
-      - 'v*'
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'gradle'
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
-      - name: Setup Android NDK
-        run: |
-          ANDROID_NDK_PATH=$(ls -d ${ANDROID_SDK_ROOT}/ndk/* | tail -1)
-          echo "ANDROID_NDK_HOME=${ANDROID_NDK_PATH}" >> $GITHUB_ENV
+    - name: Cache Cargo
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          rust-engine/target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Generate Kotlin Bindings (Option 2 Verified)
-        run: |
-          cd rust-engine
-          cargo run --features uniffi/cli --bin uniffi-bindgen generate src/agent.udl --language kotlin --out-dir ../android-app/app/src/main/java/
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r27 # 2026 Stable NDK
 
-      - name: Generate Wrapper and Build APK
-        run: |
-          if [ -d "android-app" ]; then cd android-app; fi
-          
-          if [ ! -f "gradlew" ]; then
-            echo "Generating Gradle Wrapper..."
-            gradle wrapper
-          fi
-          
-          chmod +x gradlew
-          ./gradlew assembleRelease --warning-mode none
-
-      - name: Prepare Artifact
-        run: |
-          APK_PATH=$(find . -name "*release*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ]; then
-            echo "Error: APK not found"
-            exit 1
-          fi
-          cp "$APK_PATH" appt-agent-v3.5.1.apk
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name == 'main' && format('manual-{0}', github.run_number) || github.ref_name }}
-          files: appt-agent-v3.5.1.apk
-          name: Appointment Agent ${{ github.event.inputs.build_name || github.ref_name }}
-          body: |
-            ## High Fidelity Appointment Agent Build
-            - Rust Core: BoringSSL / rquest 0.31.0 (Fixed yanked dependency)
-            - Unified UniFFI 0.28.1 Embedded Stack
-            - Android 8-16 Compatibility
-            - Encrypted Credential Storage
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build with Gradle
+      run: |
+        cd android-app
+        chmod +x gradlew
+        ./gradlew assembleDebug --stacktrace
