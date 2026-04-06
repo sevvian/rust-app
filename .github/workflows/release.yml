@@ -35,32 +35,25 @@ jobs:
           targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
       - name: Setup Android NDK
-        id: setup-ndk
         run: |
-          # Use the latest NDK available on the runner to avoid version mismatch
           ANDROID_NDK_PATH=$(ls -d ${ANDROID_SDK_ROOT}/ndk/* | tail -1)
           echo "ANDROID_NDK_HOME=${ANDROID_NDK_PATH}" >> $GITHUB_ENV
-          echo "NDK path set to: ${ANDROID_NDK_PATH}"
 
-      - name: Build Rust Engine & Android APK
+      - name: Generate Wrapper and Build
         run: |
-          # Detect if project is in a subfolder or root
-          if [ -d "android-app" ]; then
-            cd android-app
+          if [ -d "android-app" ]; then cd android-app; fi
+          
+          # Initialize Gradle Wrapper if missing
+          if [ ! -f "gradlew" ]; then
+            echo "Generating Gradle Wrapper..."
+            gradle wrapper
           fi
           
-          # Use gradlew if it exists, otherwise use system gradle
-          if [ -f "gradlew" ]; then
-            chmod +x gradlew
-            ./gradlew assembleRelease
-          else
-            echo "Gradlew not found, using system gradle..."
-            gradle assembleRelease
-          fi
+          chmod +x gradlew
+          ./gradlew assembleRelease
 
       - name: Prepare Artifact
         run: |
-          # Find the generated APK in any sub-build-folder
           APK_PATH=$(find . -name "*release*.apk" | head -n 1)
           if [ -z "$APK_PATH" ]; then
             echo "Error: APK not found"
@@ -76,7 +69,6 @@ jobs:
           name: Appointment Agent ${{ github.event.inputs.build_name || github.ref_name }}
           body: |
             ## High Fidelity Appointment Agent Build
-            - Trigger: ${{ github.event_name }}
             - Rust Core: BoringSSL / rquest Mimicry
             - Microsecond Precision Strike Logic
             - Android 8-16 Compatibility
