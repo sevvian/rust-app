@@ -16,7 +16,7 @@ android {
         minSdk = 26 
         targetSdk = 34
         versionCode = 1
-        versionName = "3.2.0"
+        versionName = "3.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -59,9 +59,8 @@ android {
 }
 
 /**
- * FIXED: Explicitly configure the Rust extension using the correctly resolved class.
- * Using 'setModule' and 'setLibname' avoids the collision with the 'module' function 
- * provided by the Gradle DependencyHandler.
+ * FIXED: Rust Extension Configuration
+ * Uses explicit setters to avoid DSL keyword collisions in Gradle 9.x
  */
 configure<RustExtension> {
     setModule("../../rust-engine")
@@ -87,7 +86,6 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 }
 
-// Hook Rust build into Android lifecycle
 tasks.whenTaskAdded {
     if (name == "javaPreCompileDebug" || name == "javaPreCompileRelease") {
         dependsOn("cargoBuild")
